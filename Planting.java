@@ -3,23 +3,21 @@
 //
 // The Planting Synchronization Problem
 //
+
 import java.util.concurrent.Semaphore;
 
 public class Planting {
     public static void main(String args[]) {
-        // Create Student, TA, Professor threads
         TA ta = new TA();
         Professor prof = new Professor(ta);
         Student stdnt = new Student(ta);
 
-        // Start the threads
         prof.start();
         ta.start();
         stdnt.start();
 
-        // Wait for prof to call it quits
         try { prof.join(); } catch (InterruptedException e) { };
-        // Terminate the TA and Student Threads
+
         ta.interrupt();
         stdnt.interrupt();
     }
@@ -56,6 +54,33 @@ class Student extends Thread {
         System.out.println("Student is done");
     }
 }
+
+class Professor extends Thread {
+    TA ta;
+
+    public Professor(TA taThread) {
+        ta = taThread;
+    }
+
+    public void run() {
+        while (ta.getHolePlanted() <= 20) {
+            try {
+                ta.professorSemaphore.acquire();
+                
+                Thread.sleep((int) (50 * Math.random()));
+                ta.incrHolePlanted();
+                System.out.println("Professor: All be advised that I have completed planting hole " +
+                        ta.getHolePlanted());
+                
+                ta.taSemaphore.release();
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+        System.out.println("Professor: We have worked enough for today");
+    }
+}
+
 
 class TA extends Thread {
     private int holeFilledNum = 0;
@@ -96,31 +121,5 @@ class TA extends Thread {
             }
         }
         System.out.println("TA is done");
-    }
-}
-
-class Professor extends Thread {
-    TA ta;
-
-    public Professor(TA taThread) {
-        ta = taThread;
-    }
-
-    public void run() {
-        while (ta.getHolePlanted() <= 20) {
-            try {
-                ta.professorSemaphore.acquire();
-                
-                Thread.sleep((int) (50 * Math.random()));
-                ta.incrHolePlanted();
-                System.out.println("Professor: All be advised that I have completed planting hole " +
-                        ta.getHolePlanted());
-                
-                ta.taSemaphore.release();
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
-        System.out.println("Professor: We have worked enough for today");
     }
 }
